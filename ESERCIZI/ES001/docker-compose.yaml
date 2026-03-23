@@ -22,10 +22,29 @@ services:
       - 'gitlab-data:/var/opt/gitlab'
     shm_size: '256m'
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    networks:
+      - net-devops
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+  
+  ssh-agent:
+    image: jenkins/ssh-agent
+    networks:
+      - net-devops
+   
+
+
+
 volumes:
   gitlab-config:
   gitlab-logs:
   gitlab-data:
+  jenkins_home:
 
 networks:
   net-devops:
