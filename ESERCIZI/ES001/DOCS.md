@@ -43,6 +43,35 @@ docker pull jenkins/jenkins:lts
 # Per recuperare la password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
+
+## Sonar Qube
+
+# https://hub.docker.com/_/sonarqube
+
+docker pull sonarqube
+
+## Prerequisiti: 
+# LINUX: lanciare i seguenti comandi
+sysctl -w vm.max_map_count=524288
+sysctl -w fs.file-max=131072
+ulimit -n 131072
+ulimit -u 8192
+# WINDOWS: Docker Desktop
+wsl -d docker-desktop
+sysctl -w vm.max_map_count=524288
+sysctl -w fs.file-max=131072
+ulimit -n 131072
+ulimit -u 8192
+
+# Volumi da creare
+/opt/sonarqube/data: data files, such as the embedded H2 database and Elasticsearch indexes
+/opt/sonarqube/logs: contains SonarQube logs about access, web process, CE process, Elasticsearch logs
+/opt/sonarqube/extensions: for 3rd party plugins
+
+# Creazione container
+docker run --name sonarqube-custom -p 9000:9000 sonarqube:community
+
+
 ```
 
 ## Approccio Dichiarativo

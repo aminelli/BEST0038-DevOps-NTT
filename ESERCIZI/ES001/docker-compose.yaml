@@ -24,6 +24,8 @@ services:
 
   jenkins:
     image: jenkins/jenkins:lts
+    container_name: jenkins
+    hostname: jenkins
     networks:
       - net-devops
     ports:
@@ -32,12 +34,30 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
   
-  ssh-agent:
+  jenkins-ssh-agent:
     image: jenkins/ssh-agent
+    container_name: jenkins-ssh-agent
+    hostname: jenkins-ssh-agent
     networks:
       - net-devops
-   
 
+  # /opt/sonarqube/data: data files, such as the embedded H2 database and Elasticsearch indexes
+  # /opt/sonarqube/logs: contains SonarQube logs about access, web process, CE process, Elasticsearch logs
+  # /opt/sonarqube/extensions: for 3rd party plugins
+  # docker run --name sonarqube-custom -p 9000:9000 sonarqube:community
+
+  sonar:
+    image: sonarqube:latest
+    container_name: sonar
+    hostname: sonar
+    networks:
+      - net-devops
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions 
 
 
 volumes:
@@ -45,6 +65,10 @@ volumes:
   gitlab-logs:
   gitlab-data:
   jenkins_home:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+
 
 networks:
   net-devops:
