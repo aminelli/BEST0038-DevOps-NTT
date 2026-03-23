@@ -1,0 +1,33 @@
+services:
+
+  gitlab:
+    image: gitlab/gitlab-ce:nightly
+    container_name: gitlab
+    hostname: 'gitlab.corso.local'
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        external_url 'https://gitlab.corso.local:9080'
+        gitlab_rails['gitlab_shell_ssh_port'] = 5022
+    networks:
+      - net-devops
+    ports:
+      - '9080:9080'
+      - '5443:443'
+      - '5022:22'
+    volumes:
+      - 'gitlab-config:/etc/gitlab'
+      - 'gitlab-logs:/var/log/gitlab'
+      - 'gitlab-data:/var/opt/gitlab'
+    shm_size: '256m'
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+
+networks:
+  net-devops:
+    driver: bridge
+
