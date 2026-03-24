@@ -33,8 +33,10 @@ docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
 
 ### JENKINS
+# https://www.jenkins.io/doc/book/installing/docker/
 # https://github.com/jenkinsci/docker
 # https://hub.docker.com/r/jenkins/jenkins
+
 
 docker pull jenkins/jenkins:lts
 
