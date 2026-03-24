@@ -26,9 +26,10 @@ sudo docker run --detach \
 
 # Credenziali
 # root 
+# 6hdpDb9jSgX+SxZ/jpCf9WgwVkNhmC+S7OT/20masos=
 
 # Per recuperare la password di gitlab
-sudo docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
 
 ### JENKINS
@@ -39,6 +40,7 @@ docker pull jenkins/jenkins:lts
 
 # Credenziali
 # admin 
+# 5cc51c5cd8b54377bb312c309e550189
 
 # Per recuperare la password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
@@ -64,9 +66,9 @@ ulimit -n 131072
 ulimit -u 8192
 
 # Volumi da creare
-/opt/sonarqube/data: data files, such as the embedded H2 database and Elasticsearch indexes
-/opt/sonarqube/logs: contains SonarQube logs about access, web process, CE process, Elasticsearch logs
-/opt/sonarqube/extensions: for 3rd party plugins
+# /opt/sonarqube/data: data files, such as the embedded H2 database and Elasticsearch indexes
+# /opt/sonarqube/logs: contains SonarQube logs about access, web process, CE process, Elasticsearch logs
+# /opt/sonarqube/extensions: for 3rd party plugins
 
 # Creazione container
 docker run --name sonarqube-custom -p 9000:9000 sonarqube:community
@@ -96,3 +98,13 @@ docker compose -p corso up -d jenkins-ssh-agent
 # Solo Jenkins agent
 docker compose -p corso up -d sonar
 ```
+
+
+
+## Plugins Jenkins da installare:
+
+- https://plugins.jenkins.io/blueocean/
+- https://plugins.jenkins.io/docker-plugin/
+- https://plugins.jenkins.io/json-path-api/
+- https://plugins.jenkins.io/docker-workflow/
+- https://plugins.jenkins.io/docker-commons/
