@@ -85,6 +85,14 @@ docker compose -p corso up -d
 docker compose -p corso up -d gitlab
 
 # Solo Jenkins
-docker compose -p corso up -d gitlab
+docker compose -p corso up -d jenkins
 
+# Solo Jenkins
+docker compose -p corso up -d jenkins
+
+# Solo Jenkins agent
+docker compose -p corso up -d jenkins-ssh-agent
+
+# Solo Jenkins agent
+docker compose -p corso up -d sonar
 ```
