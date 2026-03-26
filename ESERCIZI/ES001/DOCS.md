@@ -44,6 +44,10 @@ docker pull jenkins/jenkins:lts
 # admin 
 # 5cc51c5cd8b54377bb312c309e550189
 
+# Credenziali
+# corso
+# corso
+
 # Per recuperare la password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
@@ -101,6 +105,12 @@ docker compose -p corso up -d jenkins-ssh-agent
 docker compose -p corso up -d sonar
 ```
 
+Dashboards:
+| Tipo      | URL                           |
+| --------- | ----------------------------- |
+| GitLab    | https://[ADDRESS OR DNS]:5443 |
+| Jenkins   | http://[ADDRESS OR DNS]:8081  |
+| SonarQube | http://[ADDRESS OR DNS]:9000  |
 
 
 ## Plugins Jenkins da installare:
