@@ -58,6 +58,9 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 docker pull sonarqube
 
+# TOKEN
+# sqa_69cedf39ab5b8ea1ff02e02b11118f888a6f66f7
+
 ## Prerequisiti: 
 # LINUX: lanciare i seguenti comandi
 sysctl -w vm.max_map_count=524288
