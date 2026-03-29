@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: header('About - Corso NTT 38')}"></head>
+<body class="d-flex flex-column min-vh-100">
+    
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main Content -->
+    <main class="flex-shrink-0">
+        <div class="container mt-5">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <h1 class="display-5">
+                        <i class="bi bi-info-circle text-primary"></i> 
+                        About the Project
+                    </h1>
+                    <hr>
+                </div>
+            </div>
+            
+            <!-- Project Info -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 class="card-title h4">
+                                <i class="bi bi-file-code"></i> 
+                                <span th:text="${projectName}">Progetto</span>
+                            </h2>
+                            <p class="card-text" th:text="${description}">
+                                Descrizione del progetto...
+                            </p>
+                            
+                            <h5 class="mt-4"><i class="bi bi-star"></i> Caratteristiche Principali</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <i class="bi bi-check2 text-success"></i> 
+                                    Architettura MVC con Spring Boot
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check2 text-success"></i> 
+                                    Autenticazione e autorizzazione con Spring Security
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check2 text-success"></i> 
+                                    Template server-side con Thymeleaf
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check2 text-success"></i> 
+                                    UI responsive con Bootstrap 5
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check2 text-success"></i> 
+                                    Build e gestione dipendenze con Maven
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Usage Info -->
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-person-check"></i> Utenti di Test
+                            </h5>
+                            <p class="card-text">
+                                Per testare l'applicazione, puoi utilizzare i seguenti account:
+                            </p>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Password</th>
+                                        <th>Ruolo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>user</code></td>
+                                        <td><code>user123</code></td>
+                                        <td><span class="badge bg-primary">USER</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>admin</code></td>
+                                        <td><code>admin123</code></td>
+                                        <td>
+                                            <span class="badge bg-primary">USER</span>
+                                            <span class="badge bg-danger">ADMIN</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>mario</code></td>
+                                        <td><code>mario123</code></td>
+                                        <td><span class="badge bg-primary">USER</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technologies Sidebar -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-tools"></i> Tecnologie Utilizzate
+                            </h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item" th:each="tech : ${technologies}">
+                                <i class="bi bi-arrow-right-circle text-primary"></i> 
+                                <span th:text="${tech}">Tecnologia</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-link-45deg"></i> Link Utili
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <a href="https://spring.io/projects/spring-boot" class="btn btn-outline-primary btn-sm w-100 mb-2" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Spring Boot
+                            </a>
+                            <a href="https://spring.io/projects/spring-security" class="btn btn-outline-primary btn-sm w-100 mb-2" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Spring Security
+                            </a>
+                            <a href="https://www.thymeleaf.org/" class="btn btn-outline-primary btn-sm w-100 mb-2" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Thymeleaf
+                            </a>
+                            <a href="https://getbootstrap.com/" class="btn btn-outline-primary btn-sm w-100" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Bootstrap
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+    
+</body>
+</html>

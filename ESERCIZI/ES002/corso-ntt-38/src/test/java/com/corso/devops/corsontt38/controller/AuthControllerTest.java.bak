@@ -1,0 +1,256 @@
+package com.corso.devops.corsontt38.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.corso.devops.corsontt38.config.SecurityConfig;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+/**
+ * Test per AuthController.
+ * Verifica il corretto funzionamento della pagina di login e dei messaggi.
+ */
+@WebMvcTest(AuthController.class)
+@Import(SecurityConfig.class)
+class AuthControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    // ========================================================================
+    // TEST LOGIN PAGE ACCESS
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_shouldBeAccessibleWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeExists("pageTitle"))
+            .andExpect(model().attributeExists("helpMessage"));
+    }
+
+    @Test
+    @WithMockUser(username = "user")
+    void loginPage_shouldBeAccessibleByAuthenticatedUser() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"));
+    }
+
+    // ========================================================================
+    // TEST PAGE TITLE
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_shouldHaveCorrectPageTitle() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("pageTitle", "Login"));
+    }
+
+    // ========================================================================
+    // TEST ERROR PARAMETER
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withErrorParameter_shouldShowErrorMessage() throws Exception {
+        mockMvc.perform(get("/login").param("error", "true"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeExists("errorMessage"))
+            .andExpect(model().attribute("errorMessage", 
+                "Nome utente o password non validi. Riprova!"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withoutErrorParameter_shouldNotShowErrorMessage() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeDoesNotExist("errorMessage"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_errorMessage_shouldContainCorrectText() throws Exception {
+        mockMvc.perform(get("/login").param("error", "anyvalue"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("errorMessage", 
+                containsString("Nome utente o password non validi")));
+    }
+
+    // ========================================================================
+    // TEST LOGOUT PARAMETER
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withLogoutParameter_shouldShowLogoutMessage() throws Exception {
+        mockMvc.perform(get("/login").param("logout", "true"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeExists("logoutMessage"))
+            .andExpect(model().attribute("logoutMessage", 
+                "Logout effettuato con successo!"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withoutLogoutParameter_shouldNotShowLogoutMessage() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeDoesNotExist("logoutMessage"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_logoutMessage_shouldContainCorrectText() throws Exception {
+        mockMvc.perform(get("/login").param("logout", "anyvalue"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("logoutMessage", 
+                containsString("Logout effettuato con successo")));
+    }
+
+    // ========================================================================
+    // TEST HELP MESSAGE
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_shouldAlwaysShowHelpMessage() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("helpMessage"))
+            .andExpect(model().attribute("helpMessage", 
+                "Utenti di test: user/user123, admin/admin123, mario/mario123"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_helpMessage_shouldContainTestUsers() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("helpMessage", containsString("user/user123")))
+            .andExpect(model().attribute("helpMessage", containsString("admin/admin123")))
+            .andExpect(model().attribute("helpMessage", containsString("mario/mario123")));
+    }
+
+    // ========================================================================
+    // TEST COMBINED PARAMETERS
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withBothErrorAndLogout_shouldShowBothMessages() throws Exception {
+        mockMvc.perform(get("/login")
+                .param("error", "true")
+                .param("logout", "true"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(model().attributeExists("errorMessage"))
+            .andExpect(model().attributeExists("logoutMessage"))
+            .andExpect(model().attributeExists("helpMessage"));
+    }
+
+    // ========================================================================
+    // TEST MODEL ATTRIBUTES COUNT
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withoutParameters_shouldHaveTwoAttributes() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(model().size(2)); // pageTitle + helpMessage
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withErrorParameter_shouldHaveThreeAttributes() throws Exception {
+        mockMvc.perform(get("/login").param("error", "true"))
+            .andExpect(status().isOk())
+            .andExpect(model().size(3)); // pageTitle + helpMessage + errorMessage
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withLogoutParameter_shouldHaveThreeAttributes() throws Exception {
+        mockMvc.perform(get("/login").param("logout", "true"))
+            .andExpect(status().isOk())
+            .andExpect(model().size(3)); // pageTitle + helpMessage + logoutMessage
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withBothParameters_shouldHaveFourAttributes() throws Exception {
+        mockMvc.perform(get("/login")
+                .param("error", "true")
+                .param("logout", "true"))
+            .andExpect(status().isOk())
+            .andExpect(model().size(4)); // pageTitle + helpMessage + errorMessage + logoutMessage
+    }
+
+    // ========================================================================
+    // TEST EDGE CASES
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withEmptyErrorParameter_shouldStillShowErrorMessage() throws Exception {
+        mockMvc.perform(get("/login").param("error", ""))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("errorMessage"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withEmptyLogoutParameter_shouldStillShowLogoutMessage() throws Exception {
+        mockMvc.perform(get("/login").param("logout", ""))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("logoutMessage"));
+    }
+
+    // ========================================================================
+    // TEST VIEW NAME
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_shouldAlwaysReturnLoginView() throws Exception {
+        String viewName = mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getModelAndView()
+            .getViewName();
+
+        assert "login".equals(viewName);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void loginPage_withParameters_shouldStillReturnLoginView() throws Exception {
+        String viewName = mockMvc.perform(get("/login")
+                .param("error", "true")
+                .param("logout", "true"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getModelAndView()
+            .getViewName();
+
+        assert "login".equals(viewName);
+    }
+}

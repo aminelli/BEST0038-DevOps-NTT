@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.4</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.corso.devops</groupId>
+	<artifactId>corsontt38</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name/>
+	<description/>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>21</java.version>
+		
+		<!-- SonarQube Configuration -->
+		<sonar.host.url>http://10.0.0.43:9000</sonar.host.url>
+		<sonar.projectKey>corso-ntt-38</sonar.projectKey>
+		<sonar.projectName>Corso NTT 38 - Spring Boot Application</sonar.projectName>
+		<sonar.projectVersion>${project.version}</sonar.projectVersion>
+		<sonar.java.source>21</sonar.java.source>
+		<sonar.language>java</sonar.language>
+		<sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
+		
+		<sonar.login>sqa_69cedf39ab5b8ea1ff02e02b11118f888a6f66f7</sonar.login>
+		<!-- Percorsi sorgenti e test -->
+		<sonar.sources>src/main/java,src/main/resources</sonar.sources>
+		<sonar.tests>src/test/java</sonar.tests>
+		
+		<!-- JaCoCo Code Coverage -->
+		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		
+		<!-- Esclusioni analisi -->
+		<sonar.exclusions>**/target/**,**/*.js,**/*.css,**/static/**,**/templates/**</sonar.exclusions>
+		<sonar.test.exclusions>**/test/**,**/*Test.java,**/*Tests.java</sonar.test.exclusions>
+		
+		<!-- Quality Gate -->
+		<sonar.qualitygate.wait>false</sonar.qualitygate.wait>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		
+		<!-- Dipendenze per test web MVC -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-test-autoconfigure</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- Thymeleaf Template Engine -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		
+		<!-- Spring Security -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+		<!-- Thymeleaf extras for Spring Security -->
+		<dependency>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
+		</dependency>
+		
+		<!-- DevTools for hot reload during development -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			
+			<!-- SonarQube Maven Plugin -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>4.0.0.4121</version>
+			</plugin>
+			
+			<!-- JaCoCo Maven Plugin for Code Coverage -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.11</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>PACKAGE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.0</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Dockerfile Maven Plugin for Docker Image Build -->
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>1.4.13</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+							<!-- Decommentare per push automatico su registry -->
+							<!-- <goal>push</goal> -->
+						</goals>
+					</execution>
+					<execution>
+						<id>tag-version</id>
+						<phase>package</phase>
+						<goals>
+							<goal>tag</goal>
+						</goals>
+						<configuration>
+							<tag>${project.version}</tag>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- Repository Docker (modificare per registry privato) -->
+					<repository>corso-ntt-38</repository>
+					
+					<!-- Tag dell'immagine -->
+					<tag>latest</tag>
+					
+					<!-- Path del Dockerfile (root del progetto) -->
+					<dockerfile>Dockerfile</dockerfile>
+					
+					<!-- Context directory per il build -->
+					<contextDirectory>${project.basedir}</contextDirectory>
+					
+					<!-- Build arguments da passare al Dockerfile -->
+					<buildArgs>
+						<JAR_FILE>target/${project.build.finalName}.jar</JAR_FILE>
+					</buildArgs>
+					
+					<!-- Pulisci immagini intermedie -->
+					<noCache>false</noCache>
+					
+					<!-- Pull sempre l'immagine base più recente -->
+					<pullNewerImage>false</pullNewerImage>
+					
+					<!-- Username e password per registry privato (opzionale) -->
+					<!-- Usare settings.xml o variabili d'ambiente per sicurezza -->
+					<!-- <useMavenSettingsForAuth>true</useMavenSettingsForAuth> -->
+					
+					<!-- Google Container Registry / Azure Container Registry -->
+					<!-- <repository>gcr.io/PROJECT_ID/corso-ntt-38</repository> -->
+					<!-- <repository>myregistry.azurecr.io/corso-ntt-38</repository> -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

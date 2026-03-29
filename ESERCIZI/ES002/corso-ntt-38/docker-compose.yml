@@ -1,0 +1,67 @@
+# ============================================================================
+# Docker Compose - Orchestrazione container per sviluppo locale
+# ============================================================================
+version: '3.8'
+
+services:
+  # Applicazione Spring Boot
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: corsontt38:latest
+    container_name: corsontt38-app
+    ports:
+      - "8080:8080"
+    environment:
+      # JVM Options
+      JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC"
+      
+      # Spring Boot configuration
+      SPRING_PROFILES_ACTIVE: dev
+      
+      # Logging
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_CORSO: DEBUG
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits (opzionale, commentare se non necessario)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1.0'
+    #       memory: 1G
+    #     reservations:
+    #       cpus: '0.5'
+    #       memory: 512M
+    
+    networks:
+      - app-network
+    
+    # Volumes per logs persistenti (opzionale)
+    volumes:
+      - app-logs:/app/logs
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  app-network:
+    driver: bridge
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  app-logs:
+    driver: local

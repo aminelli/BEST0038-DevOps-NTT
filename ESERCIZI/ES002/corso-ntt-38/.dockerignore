@@ -1,0 +1,94 @@
+# ============================================================================
+# .dockerignore - File da escludere dalla build Docker
+# ============================================================================
+
+# Directory di build e output
+target/
+build/
+out/
+bin/
+
+# File di configurazione IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.metadata/
+
+# File di sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# File temporanei
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.*.swp
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# Documentation
+README.md
+HELP.md
+DATA.md
+Prompting.md
+*.md
+docs/
+
+# Test reports e coverage
+target/surefire-reports/
+target/site/
+target/jacoco.exec
+jacoco.exec
+*.exec
+
+# Scripts (non necessari nel container)
+scripts/
+*.ps1
+*.sh
+
+# Temporary folders
+Temp/
+Testing/
+test.html
+
+# Maven local repository (se presente)
+.m2/
+repository/
+
+# Node modules (se presenti per frontend)
+node_modules/
+npm-debug.log
+
+# Environment files (contengono secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Backup files
+*.bak
+*.backup
+*.old

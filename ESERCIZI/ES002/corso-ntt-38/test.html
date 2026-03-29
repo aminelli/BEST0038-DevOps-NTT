@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Corso NTT 38</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+          crossorigin="anonymous">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <!-- Logo/Brand -->
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-code-square"></i> Corso NTT 38
+            </a>
+            
+            <!-- Hamburger button per mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav" aria-controls="navbarNav" 
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Menu Items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Link pubblici -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/home">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">
+                            <i class="bi bi-info-circle"></i> About
+                        </a>
+                    </li>
+                    
+                    <!-- Link area privata (solo se autenticato) -->
+                    
+                </ul>
+                
+                <!-- User info e Login/Logout -->
+                <div class="d-flex align-items-center">
+                    <!-- Se NON autenticato: mostra Login -->
+                    <div>
+                        <a class="btn btn-outline-light" href="/login">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </div>
+                    
+                    <!-- Se autenticato: mostra username e Logout -->
+                    
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="flex-shrink-0">
+        <div class="container mt-5">
+            <!-- Hero Section -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="jumbotron bg-light p-5 rounded-3 shadow-sm">
+                        <h1 class="display-4">
+                            <i class="bi bi-rocket-takeoff text-primary"></i> 
+                            <span>Benvenuto nell&#39;applicazione Spring Boot!</span>
+                        </h1>
+                        <p class="lead mt-3">
+                            Questa è un'applicazione web dimostrativa realizzata con Spring Boot, 
+                            Spring Security e Bootstrap. Esplora le funzionalità di autenticazione 
+                            e gestione delle aree pubbliche e private.
+                        </p>
+                        <hr class="my-4">
+                        <p>
+                            <strong>Funzionalità principali:</strong>
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Sistema di autenticazione con Spring Security</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Aree pubbliche e private</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Design responsive con Bootstrap 5</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Template Thymeleaf per rendering server-side</li>
+                        </ul>
+                        
+                        <!-- Pulsanti CTA -->
+                        <div class="mt-4">
+                            <a class="btn btn-primary btn-lg me-2" href="/about" role="button">
+                                <i class="bi bi-info-circle"></i> Scopri di più
+                            </a>
+                            <a class="btn btn-success btn-lg" href="/login" role="button">
+                                <i class="bi bi-box-arrow-in-right"></i> Accedi
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Section -->
+            <div class="row mt-5">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-shield-lock display-1 text-primary"></i>
+                            <h5 class="card-title mt-3">Sicurezza</h5>
+                            <p class="card-text">
+                                Autenticazione robusta con Spring Security e password cifrate con BCrypt.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-phone display-1 text-success"></i>
+                            <h5 class="card-title mt-3">Responsive</h5>
+                            <p class="card-text">
+                                Interfaccia completamente responsive, ottimizzata per tutti i dispositivi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-lightning-charge display-1 text-warning"></i>
+                            <h5 class="card-title mt-3">Veloce</h5>
+                            <p class="card-text">
+                                Basato su Spring Boot 4.0 e Java 21 per prestazioni ottimali.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4 bg-dark text-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-code-square"></i> Corso NTT 38</h5>
+                    <p class="text-muted">Applicazione web Spring Boot dimostrativa</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">
+                        <strong>Tecnologie:</strong> Java 21, Spring Boot 4.0, Bootstrap 5
+                    </p>
+                    <p class="text-muted mb-0">
+                        &copy; <span>2026</span> - DevOps Course
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <div>
+        <!-- Bootstrap 5 JS Bundle (includes Popper) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+                integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+                crossorigin="anonymous"></script>
+        
+        <!-- Custom JS -->
+        <script src="/js/custom.js"></script>
+    </div>
+    
+</body>
+</html>

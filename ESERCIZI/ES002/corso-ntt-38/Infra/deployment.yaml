@@ -1,0 +1,149 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corso-ntt-38-app
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+    component: backend
+    version: v1
+spec:
+  # Fattore di replica: 3
+  replicas: 3
+  
+  # Strategia di deployment
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Numero massimo di pod aggiuntivi durante l'update
+      maxUnavailable: 1  # Numero massimo di pod non disponibili durante l'update
+  
+  # Selettore per i pod
+  selector:
+    matchLabels:
+      app: corso-ntt-38
+      component: backend
+  
+  # Template dei pod
+  template:
+    metadata:
+      labels:
+        app: corso-ntt-38
+        component: backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    
+    spec:
+      # Configurazione container
+      containers:
+      - name: spring-boot-app
+        image: corso-ntt-38:latest
+        imagePullPolicy: IfNotPresent
+        
+        # Porte esposte
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        
+        # Variabili d'ambiente
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "production"
+        - name: JAVA_OPTS
+          valueFrom:
+            configMapKeyRef:
+              name: corso-ntt-38-config
+              key: java-opts
+        - name: SERVER_PORT
+          value: "8080"
+        - name: LOGGING_LEVEL_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: corso-ntt-38-config
+              key: log-level
+        
+        # Resource limits e requests
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Startup probe (per applicazioni lente all'avvio)
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+        
+        # Volume mounts
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+        - name: tmp
+          mountPath: /tmp
+      
+      # Volumi
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      # Affinity per distribuire i pod su nodi diversi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - corso-ntt-38
+              topologyKey: kubernetes.io/hostname
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # DNS policy
+      dnsPolicy: ClusterFirst
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 30

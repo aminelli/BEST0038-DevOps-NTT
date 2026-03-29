@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: header('Dashboard - Corso NTT 38')}"></head>
+<body class="d-flex flex-column min-vh-100">
+    
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main Content -->
+    <main class="flex-shrink-0">
+        <div class="container mt-5">
+            <!-- Welcome Header -->
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="alert alert-success shadow-sm" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="bi bi-emoji-smile"></i> 
+                            <span th:text="${welcomeMessage}">Benvenuto!</span>
+                        </h4>
+                        <p class="mb-0">Hai effettuato l'accesso con successo alla tua area riservata.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Info Cards -->
+            <div class="row">
+                <!-- User Profile Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-circle"></i> Informazioni Utente
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold">
+                                            <i class="bi bi-person-badge text-primary"></i> Username:
+                                        </td>
+                                        <td>
+                                            <code th:text="${username}">username</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">
+                                            <i class="bi bi-shield-check text-success"></i> Ruoli:
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary" th:text="${userRoles}">USER</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">
+                                            <i class="bi bi-clock text-info"></i> Login effettuato:
+                                        </td>
+                                        <td th:text="${#dates.format(loginTime, 'dd/MM/yyyy HH:mm:ss')}">
+                                            01/01/2024 10:00:00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">
+                                            <i class="bi bi-check-circle text-success"></i> Stato:
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success" th:if="${isAuthenticated}">Autenticato</span>
+                                            <span class="badge bg-danger" th:unless="${isAuthenticated}">Non Autenticato</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-lightning-charge"></i> Azioni Rapide
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a th:href="@{/}" class="btn btn-outline-primary">
+                                    <i class="bi bi-house-door"></i> Vai alla Home Pubblica
+                                </a>
+                                <a th:href="@{/about}" class="btn btn-outline-info">
+                                    <i class="bi bi-info-circle"></i> Pagina About
+                                </a>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="btn btn-outline-danger w-100">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dashboard Content -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead">
+                                Benvenuto nella tua area privata! 
+                            </p>
+                            <p>
+                                Questa è un'area protetta accessibile solo agli utenti autenticati. 
+                                Qui potresti visualizzare:
+                            </p>
+                            <ul>
+                                <li>Statistiche personali</li>
+                                <li>Dati riservati</li>
+                                <li>Impostazioni del profilo</li>
+                                <li>Notifiche e messaggi</li>
+                            </ul>
+                            
+                            <!-- Example Admin Section -->
+                            <div sec:authorize="hasRole('ADMIN')" class="alert alert-warning mt-4">
+                                <h5 class="alert-heading">
+                                    <i class="bi bi-shield-fill-exclamation"></i> Sezione Amministratore
+                                </h5>
+                                <p class="mb-0">
+                                    Hai privilegi di amministratore! Questa sezione è visibile solo agli utenti con ruolo ADMIN.
+                                </p>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row text-center mt-4">
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="bi bi-graph-up display-4 text-success"></i>
+                                        <h5 class="mt-2">Statistiche</h5>
+                                        <p class="text-muted">Visualizza le tue metriche</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="bi bi-gear display-4 text-primary"></i>
+                                        <h5 class="mt-2">Impostazioni</h5>
+                                        <p class="text-muted">Configura il tuo profilo</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3">
+                                        <i class="bi bi-bell display-4 text-warning"></i>
+                                        <h5 class="mt-2">Notifiche</h5>
+                                        <p class="text-muted">Controlla gli avvisi</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+    
+</body>
+</html>

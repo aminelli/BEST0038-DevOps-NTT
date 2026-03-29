@@ -1,0 +1,21 @@
+---
+# Pod Disruption Budget
+# Assicura che un numero minimo di pod sia sempre disponibile
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: corso-ntt-38-pdb
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+spec:
+  # Minimo di pod disponibili durante disruption volontarie
+  minAvailable: 2
+  
+  # Oppure usa maxUnavailable (commenta minAvailable se usi questo)
+  # maxUnavailable: 1
+  
+  selector:
+    matchLabels:
+      app: corso-ntt-38
+      component: backend

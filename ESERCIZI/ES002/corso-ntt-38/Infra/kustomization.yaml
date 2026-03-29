@@ -1,0 +1,59 @@
+---
+# Kustomization file per gestire varianti dell'applicazione
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace target
+namespace: corso-ntt-38
+
+# Risorse da applicare
+resources:
+- namespace.yaml
+- configmap.yaml
+- secret.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- hpa.yaml
+- pdb.yaml
+- networkpolicy.yaml
+
+# Etichette comuni
+commonLabels:
+  app: corso-ntt-38
+  managed-by: kustomize
+
+# Annotazioni comuni
+commonAnnotations:
+  description: "Corso NTT DevOps - Spring Boot Application"
+  version: "1.0.0"
+
+# Image tags (per override)
+images:
+- name: corso-ntt-38
+  newName: corso-ntt-38
+  newTag: latest
+
+# ConfigMap generator (esempio per generare ConfigMap da file)
+# configMapGenerator:
+# - name: app-config
+#   files:
+#   - application.properties
+
+# Secret generator (esempio)
+# secretGenerator:
+# - name: app-secrets
+#   literals:
+#   - db-password=supersecret
+
+# Patches strategiche (esempio per modificare risorse)
+# patchesStrategicMerge:
+# - deployment-patch.yaml
+
+# Variabili sostituibili
+# vars:
+# - name: NAMESPACE
+#   objref:
+#     kind: Namespace
+#     name: corso-ntt-38
+#     apiVersion: v1

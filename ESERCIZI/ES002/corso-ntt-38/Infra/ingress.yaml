@@ -1,0 +1,64 @@
+---
+# Ingress per routing HTTP/HTTPS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: corso-ntt-38-ingress
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+  annotations:
+    # Nginx Ingress Controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    
+    # Timeout
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    
+    # CORS (se necessario)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    
+    # Session affinity
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+
+spec:
+  ingressClassName: nginx
+  
+  # TLS configuration (opzionale, richiede certificato)
+  # tls:
+  # - hosts:
+  #   - corso-ntt-38.example.com
+  #   secretName: corso-ntt-38-tls-secret
+  
+  rules:
+  - host: corso-ntt-38.local  # Cambia con il tuo dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: corso-ntt-38-service
+            port:
+              number: 8080
+  
+  # Fallback per accesso senza host (utile per sviluppo)
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: corso-ntt-38-service
+            port:
+              number: 8080

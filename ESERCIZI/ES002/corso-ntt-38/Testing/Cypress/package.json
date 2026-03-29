@@ -1,0 +1,28 @@
+{
+  "name": "corso-ntt-38-cypress-tests",
+  "version": "1.0.0",
+  "description": "Cypress E2E tests for Spring Boot application",
+  "main": "index.js",
+  "scripts": {
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:run:chrome": "cypress run --browser chrome",
+    "cypress:run:firefox": "cypress run --browser firefox",
+    "cypress:run:edge": "cypress run --browser edge",
+    "test": "cypress run",
+    "test:headed": "cypress run --headed",
+    "test:spec": "cypress run --spec"
+  },
+  "keywords": [
+    "cypress",
+    "e2e",
+    "testing",
+    "spring-boot"
+  ],
+  "author": "Corso NTT DevOps",
+  "license": "MIT",
+  "devDependencies": {
+    "cypress": "^13.6.0"
+  },
+  "dependencies": {}
+}

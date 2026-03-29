@@ -1,0 +1,266 @@
+package com.corso.devops.corsontt38.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.corso.devops.corsontt38.config.SecurityConfig;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+/**
+ * Test per PrivateAreaController.
+ * Verifica l'accesso all'area privata e la corretta gestione dell'autenticazione.
+ */
+@WebMvcTest(PrivateAreaController.class)
+@Import(SecurityConfig.class)
+class PrivateAreaControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    // ========================================================================
+    // TEST ACCESS CONTROL
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void dashboard_withoutAuthentication_shouldRedirectToLogin() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    void dashboard_withAuthentication_shouldBeAccessible() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("private/dashboard"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
+    void dashboard_asAdmin_shouldBeAccessible() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("private/dashboard"));
+    }
+
+    @Test
+    @WithMockUser(username = "mario", roles = "USER")
+    void dashboard_asMario_shouldBeAccessible() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("private/dashboard"));
+    }
+
+    // ========================================================================
+    // TEST PAGE TITLE
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldHaveCorrectPageTitle() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("pageTitle", "Dashboard"));
+    }
+
+    // ========================================================================
+    // TEST USERNAME DISPLAY
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldDisplayUsername() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("username"))
+            .andExpect(model().attribute("username", "user"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin")
+    void dashboard_shouldDisplayAdminUsername() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("username", "admin"));
+    }
+
+    @Test
+    @WithMockUser(username = "mario")
+    void dashboard_shouldDisplayMarioUsername() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("username", "mario"));
+    }
+
+    // ========================================================================
+    // TEST USER ROLES
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    void dashboard_shouldDisplayUserRole() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("userRoles"))
+            .andExpect(model().attribute("userRoles", containsString("ROLE_USER")));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
+    void dashboard_shouldDisplayAdminRoles() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("userRoles"))
+            .andExpect(model().attribute("userRoles", containsString("ROLE_USER")))
+            .andExpect(model().attribute("userRoles", containsString("ROLE_ADMIN")));
+    }
+
+    // ========================================================================
+    // TEST WELCOME MESSAGE
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldHaveWelcomeMessage() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("welcomeMessage"))
+            .andExpect(model().attribute("welcomeMessage", 
+                "Benvenuto nella tua area riservata, user!"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin")
+    void dashboard_shouldHavePersonalizedWelcomeMessage() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("welcomeMessage", 
+                "Benvenuto nella tua area riservata, admin!"));
+    }
+
+    @Test
+    @WithMockUser(username = "mario")
+    void dashboard_welcomeMessage_shouldContainUsername() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("welcomeMessage", 
+                containsString("mario")));
+    }
+
+    // ========================================================================
+    // TEST ADDITIONAL INFORMATION
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldHaveLoginTime() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("loginTime"))
+            .andExpect(model().attribute("loginTime", notNullValue()));
+    }
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldIndicateAuthenticated() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("isAuthenticated"))
+            .andExpect(model().attribute("isAuthenticated", true));
+    }
+
+    // ========================================================================
+    // TEST MODEL ATTRIBUTES
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    void dashboard_shouldPopulateModelCorrectly() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().size(6)) // pageTitle, username, userRoles, welcomeMessage, loginTime, isAuthenticated
+            .andExpect(model().attributeExists("pageTitle"))
+            .andExpect(model().attributeExists("username"))
+            .andExpect(model().attributeExists("userRoles"))
+            .andExpect(model().attributeExists("welcomeMessage"))
+            .andExpect(model().attributeExists("loginTime"))
+            .andExpect(model().attributeExists("isAuthenticated"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
+    void dashboard_forAdmin_shouldPopulateModelCorrectly() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("username", "admin"))
+            .andExpect(model().attribute("pageTitle", "Dashboard"))
+            .andExpect(model().attribute("isAuthenticated", true));
+    }
+
+    // ========================================================================
+    // TEST VIEW NAME
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldReturnCorrectView() throws Exception {
+        String viewName = mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getModelAndView()
+            .getViewName();
+
+        assert "private/dashboard".equals(viewName);
+    }
+
+    // ========================================================================
+    // TEST DIFFERENT USERS
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "testuser123", roles = "USER")
+    void dashboard_withDifferentUsername_shouldShowCorrectData() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("username", "testuser123"))
+            .andExpect(model().attribute("welcomeMessage", 
+                containsString("testuser123")));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER", "MODERATOR", "ADMIN"})
+    void dashboard_withMultipleRoles_shouldDisplayAllRoles() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("userRoles", containsString("ROLE_USER")))
+            .andExpect(model().attribute("userRoles", containsString("ROLE_MODERATOR")))
+            .andExpect(model().attribute("userRoles", containsString("ROLE_ADMIN")));
+    }
+
+    // ========================================================================
+    // TEST AUTHENTICATION OBJECT
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void dashboard_shouldReceiveAuthenticationObject() throws Exception {
+        // The fact that username and roles are populated means
+        // the Authentication object is properly injected
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeExists("username"))
+            .andExpect(model().attributeExists("userRoles"))
+            .andExpect(model().attributeExists("isAuthenticated"));
+    }
+}

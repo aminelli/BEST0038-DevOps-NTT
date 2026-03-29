@@ -1,0 +1,96 @@
+package com.corso.devops.corsontt38.controller;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Test per HomeController.
+ * Verifica il corretto funzionamento delle pagine pubbliche (home e about).
+ */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class HomeControllerTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    //================================================================
+
+    @Test
+    void homePage_shouldBeAccessibleWithoutAuthentication() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("Benvenuto");
+    }
+
+    @Test
+    void homePage_withHomeUrl_shouldBeAccessible() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/home", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void homePage_shouldContainWelcomeMessage() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("Benvenuto nell'applicazione Spring Boot!");
+    }
+
+    // ========================================================================
+    // TEST ABOUT PAGE
+    // ========================================================================
+
+    @Test
+    void aboutPage_shouldBeAccessibleWithoutAuthentication() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/about", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("Corso NTT 38");
+    }
+
+    @Test
+    void aboutPage_shouldContainTechnologies() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/about", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+            .contains("Java 21")
+            .contains("Spring Boot")
+            .contains("Thymeleaf");
+    }
+
+    @Test
+    void aboutPage_shouldContainDescription() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/about", String.class);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("Applicazione web dimostrativa");
+    }
+
+    // ========================================================================
+    // TEST BOTH URLS FOR HOME
+    // ========================================================================
+
+    @Test
+    void rootUrl_andHomeUrl_shouldReturnSameContent() {
+        ResponseEntity<String> responseRoot = restTemplate.getForEntity("/", String.class);
+        ResponseEntity<String> responseHome = restTemplate.getForEntity("/home", String.class);
+
+        assertThat(responseRoot.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseHome.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseRoot.getBody()).contains("Benvenuto");
+        assertThat(responseHome.getBody()).contains("Benvenuto");
+    }
+}

@@ -1,0 +1,62 @@
+---
+# Horizontal Pod Autoscaler
+# Scala automaticamente i pod in base al carico
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: corso-ntt-38-hpa
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: corso-ntt-38-app
+  
+  # Numero minimo e massimo di repliche
+  minReplicas: 3
+  maxReplicas: 10
+  
+  # Metriche per l'autoscaling
+  metrics:
+  
+  # CPU - Scala quando l'utilizzo medio supera l'80%
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  # Memory - Scala quando l'utilizzo medio supera l'85%
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
+  
+  # Comportamento di scaling
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Attende 5 minuti prima di scalare in giù
+      policies:
+      - type: Percent
+        value: 50           # Rimuove max 50% dei pod
+        periodSeconds: 60   # Ogni minuto
+      - type: Pods
+        value: 2            # O max 2 pod
+        periodSeconds: 60
+      selectPolicy: Min     # Usa la policy più conservativa
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scala immediatamente in su
+      policies:
+      - type: Percent
+        value: 100          # Raddoppia i pod
+        periodSeconds: 15   # Ogni 15 secondi
+      - type: Pods
+        value: 4            # O aggiunge max 4 pod
+        periodSeconds: 15
+      selectPolicy: Max     # Usa la policy più aggressiva

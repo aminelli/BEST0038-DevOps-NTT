@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/header :: header('Home - Corso NTT 38')}"></head>
+<body class="d-flex flex-column min-vh-100">
+    
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main Content -->
+    <main class="flex-shrink-0">
+        <div class="container mt-5">
+            <!-- Hero Section -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="jumbotron bg-light p-5 rounded-3 shadow-sm">
+                        <h1 class="display-4">
+                            <i class="bi bi-rocket-takeoff text-primary"></i> 
+                            <span th:text="${welcomeMessage}">Benvenuto!</span>
+                        </h1>
+                        <p class="lead mt-3">
+                            Questa è un'applicazione web dimostrativa realizzata con Spring Boot, 
+                            Spring Security e Bootstrap. Esplora le funzionalità di autenticazione 
+                            e gestione delle aree pubbliche e private.
+                        </p>
+                        <hr class="my-4">
+                        <p>
+                            <strong>Funzionalità principali:</strong>
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Sistema di autenticazione con Spring Security</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Aree pubbliche e private</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Design responsive con Bootstrap 5</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Template Thymeleaf per rendering server-side</li>
+                        </ul>
+                        
+                        <!-- Pulsanti CTA -->
+                        <div class="mt-4">
+                            <a class="btn btn-primary btn-lg me-2" th:href="@{/about}" role="button">
+                                <i class="bi bi-info-circle"></i> Scopri di più
+                            </a>
+                            <a class="btn btn-success btn-lg" th:href="@{/login}" sec:authorize="!isAuthenticated()" role="button">
+                                <i class="bi bi-box-arrow-in-right"></i> Accedi
+                            </a>
+                            <a class="btn btn-success btn-lg" th:href="@{/private/dashboard}" sec:authorize="isAuthenticated()" role="button">
+                                <i class="bi bi-speedometer2"></i> Vai alla Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Section -->
+            <div class="row mt-5">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-shield-lock display-1 text-primary"></i>
+                            <h5 class="card-title mt-3">Sicurezza</h5>
+                            <p class="card-text">
+                                Autenticazione robusta con Spring Security e password cifrate con BCrypt.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-phone display-1 text-success"></i>
+                            <h5 class="card-title mt-3">Responsive</h5>
+                            <p class="card-text">
+                                Interfaccia completamente responsive, ottimizzata per tutti i dispositivi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-lightning-charge display-1 text-warning"></i>
+                            <h5 class="card-title mt-3">Veloce</h5>
+                            <p class="card-text">
+                                Basato su Spring Boot 4.0 e Java 21 per prestazioni ottimali.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="~{fragments/footer :: scripts}"></div>
+    
+</body>
+</html>

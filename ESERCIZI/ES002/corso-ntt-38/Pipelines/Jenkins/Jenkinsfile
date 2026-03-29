@@ -1,0 +1,616 @@
+pipeline {
+    agent any
+    
+    // Variabili d'ambiente globali
+    environment {
+        // Configurazione Git
+        GIT_REPO = 'https://gitlab.corso.local:5443/gr38/corso-ntt-38.git'
+        GIT_BRANCH = 'main'
+        //GIT_CREDENTIALS_ID = 'gitlab-credentials'
+        
+        // Configurazione Maven
+        MAVEN_HOME = tool 'Maven-3.9'
+        MAVEN_OPTS = '-Xmx1024m -XX:MaxPermSize=256m'
+        
+        // Configurazione SonarQube
+        SONAR_HOST_URL = 'http://localhost:9000'
+        SONAR_PROJECT_KEY = 'corso-ntt-38'
+        SONAR_CREDENTIALS_ID = 'sonarqube-token'
+        
+        // Configurazione Docker
+        DOCKER_IMAGE_NAME = 'corso-ntt-38'
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'myregistry.azurecr.io'
+        DOCKER_CREDENTIALS_ID = 'docker-registry-credentials'
+        
+        // Configurazione Kubernetes
+        K8S_NAMESPACE = 'corso-ntt-38'
+        K8S_DEPLOYMENT = 'corso-ntt-38-app'
+        K8S_CONFIG_ID = 'kubeconfig-credentials'
+        
+        // Configurazione Cypress
+        CYPRESS_BASE_URL = 'http://localhost:8080'
+        
+        // Java version
+        JAVA_HOME = tool 'JDK-21'
+        PATH = "${JAVA_HOME}/bin:${MAVEN_HOME}/bin:${env.PATH}"
+    }
+    
+    // Parametri configurabili
+    parameters {
+        string(name: 'GIT_BRANCH_PARAM', defaultValue: 'main', description: 'Branch Git da buildare')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip unit tests')
+        booleanParam(name: 'SKIP_SONAR', defaultValue: false, description: 'Skip SonarQube analysis')
+        booleanParam(name: 'SKIP_CYPRESS', defaultValue: false, description: 'Skip Cypress E2E tests')
+        booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: true, description: 'Deploy to Kubernetes')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'production'], description: 'Target environment')
+    }
+    
+    // Opzioni pipeline
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '5'))
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+    }
+    
+    // Trigger automatici
+    triggers {
+        // Poll SCM ogni 5 minuti
+        pollSCM('H/5 * * * *')
+        // Build periodico ogni notte alle 2:00
+        cron('0 2 * * *')
+    }
+    
+    stages {
+        
+        // ========================================
+        // STAGE 1: Checkout del codice sorgente
+        // ========================================
+        stage('Git Checkout') {
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  🔽 CHECKOUT DEL CODICE SORGENTE'
+                    echo '========================================='
+                    echo "Repository: ${GIT_REPO}"
+                    echo "Branch: ${params.GIT_BRANCH_PARAM ?: GIT_BRANCH}"
+                    echo "Build Number: ${env.BUILD_NUMBER}"
+                }
+                
+                // Pulizia workspace
+                cleanWs()
+                
+                // Checkout con credenziali
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.GIT_BRANCH_PARAM ?: GIT_BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${GIT_REPO}" //,
+                        //credentialsId: "${GIT_CREDENTIALS_ID}"
+                    ]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, noTags: false, shallow: true],
+                        [$class: 'CheckoutOption', timeout: 10]
+                    ]
+                ])
+                
+                // Informazioni Git
+                script {
+                    def gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                    def gitAuthor = sh(returnStdout: true, script: 'git log -1 --pretty=format:%an').trim()
+                    def gitMessage = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s').trim()
+                    
+                    echo "Git Commit: ${gitCommit}"
+                    echo "Author: ${gitAuthor}"
+                    echo "Message: ${gitMessage}"
+                    
+                    currentBuild.description = "Branch: ${params.GIT_BRANCH_PARAM ?: GIT_BRANCH} | Commit: ${gitCommit.take(8)}"
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 2: Unit Test con Maven
+        // ========================================
+        stage('Unit Tests') {
+            when {
+                expression { return !params.SKIP_TESTS }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  🧪 ESECUZIONE UNIT TEST'
+                    echo '========================================='
+                }
+                
+                // Esegue test con JaCoCo coverage
+                bat '''
+                    echo Esecuzione unit test con Maven...
+                    mvnw.cmd clean test jacoco:report
+                '''
+                
+                // Pubblica report JUnit
+                junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: false
+                
+                // Pubblica report JaCoCo
+                jacoco(
+                    execPattern: '**/target/jacoco.exec',
+                    classPattern: '**/target/classes',
+                    sourcePattern: '**/src/main/java',
+                    exclusionPattern: '**/*Test*.class'
+                )
+            }
+            post {
+                success {
+                    echo '✅ Unit test completati con successo'
+                }
+                failure {
+                    echo '❌ Unit test falliti'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 3: Analisi SonarQube
+        // ========================================
+        stage('SonarQube Analysis') {
+            when {
+                expression { return !params.SKIP_SONAR }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  📊 ANALISI SONARQUBE'
+                    echo '========================================='
+                }
+                
+                // Esegue analisi SonarQube con credenziali
+                withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                    bat """
+                        mvnw.cmd sonar:sonar ^
+                        -Dsonar.host.url="${SONAR_HOST_URL}" ^
+                        -Dsonar.projectKey="${SONAR_PROJECT_KEY}" ^
+                        -Dsonar.login=%SONAR_TOKEN% ^
+                        -Dsonar.qualitygate.wait=true
+                    """
+                }
+            }
+            post {
+                success {
+                    echo '✅ Analisi SonarQube completata'
+                }
+                failure {
+                    echo '⚠️ Analisi SonarQube fallita o Quality Gate non superato'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 4: Build e Package (JAR)
+        // ========================================
+        stage('Build Application') {
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  📦 BUILD APPLICAZIONE'
+                    echo '========================================='
+                }
+                
+                // Build del JAR con Maven (skip dei test già eseguiti)
+                bat '''
+                    echo Building application...
+                    mvnw.cmd clean package -DskipTests -Ddockerfile.skip=true
+                '''
+                
+                // Archivia il JAR come artifact
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true, allowEmptyArchive: false
+            }
+            post {
+                success {
+                    echo '✅ Build completato: JAR generato'
+                    script {
+                        def jarFile = findFiles(glob: '**/target/*.jar')[0]
+                        echo "📦 Artifact: ${jarFile.name} (${jarFile.length} bytes)"
+                    }
+                }
+                failure {
+                    echo '❌ Build fallito'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 5: Docker Image Build con Maven
+        // ========================================
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  🐳 BUILD DOCKER IMAGE'
+                    echo '========================================='
+                    echo "Image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                }
+                
+                // Build Docker image usando Maven Dockerfile plugin
+                bat """
+                    echo Building Docker image with Maven...
+                    mvnw.cmd dockerfile:build ^
+                    -Ddockerfile.repository="${DOCKER_IMAGE_NAME}" ^
+                    -Ddockerfile.tag="${DOCKER_IMAGE_TAG}"
+                """
+                
+                // Tag come latest
+                bat """
+                    docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:latest
+                """
+                
+                // Verifica immagine creata
+                bat "docker images ${DOCKER_IMAGE_NAME}"
+            }
+            post {
+                success {
+                    echo '✅ Docker image creata con successo'
+                }
+                failure {
+                    echo '❌ Build Docker image fallito'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 6: Docker Image Push to Registry
+        // ========================================
+        stage('Push Docker Image') {
+            when {
+                expression { return params.DEPLOY_TO_K8S }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  📤 PUSH DOCKER IMAGE TO REGISTRY'
+                    echo '========================================='
+                }
+                
+                // Login al registry con credenziali
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS_ID}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    bat """
+                        echo %DOCKER_PASS%| docker login ${DOCKER_REGISTRY} -u %DOCKER_USER% --password-stdin
+                        
+                        echo Tagging image for registry...
+                        docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                        docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
+                        
+                        echo Pushing image to registry...
+                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:latest
+                        
+                        docker logout ${DOCKER_REGISTRY}
+                    """
+                }
+            }
+            post {
+                success {
+                    echo '✅ Docker image pushed to registry'
+                }
+                failure {
+                    echo '❌ Push Docker image fallito'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 7: Start Application for E2E Tests
+        // ========================================
+        stage('Start Application') {
+            when {
+                expression { return !params.SKIP_CYPRESS }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  🚀 AVVIO APPLICAZIONE PER TEST E2E'
+                    echo '========================================='
+                }
+                
+                // Avvia l'applicazione in background per i test Cypress
+                bat '''
+                    echo Starting application in background...
+                    start /B mvnw.cmd spring-boot:run > app.log 2>&1
+                    
+                    echo Waiting for application to be ready...
+                    timeout /t 60 /nobreak
+                    
+                    echo Testing application health...
+                    curl -f http://localhost:8080/actuator/health || exit /b 1
+                '''
+            }
+            post {
+                success {
+                    echo '✅ Applicazione avviata e pronta'
+                }
+                failure {
+                    echo '❌ Avvio applicazione fallito'
+                    bat 'type app.log'
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 8: Cypress E2E Tests
+        // ========================================
+        stage('Cypress E2E Tests') {
+            when {
+                expression { return !params.SKIP_CYPRESS }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  🎯 ESECUZIONE TEST E2E CYPRESS'
+                    echo '========================================='
+                }
+                
+                dir('Testing/Cypress') {
+                    // Installa dipendenze se necessario
+                    bat '''
+                        if not exist "node_modules" (
+                            echo Installing Cypress dependencies...
+                            npm install
+                        )
+                    '''
+                    
+                    // Esegue test Cypress
+                    bat '''
+                        echo Running Cypress tests...
+                        npx cypress run --headless --browser chrome --config baseUrl=%CYPRESS_BASE_URL%
+                    '''
+                }
+                
+                // Pubblica report Cypress
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'Testing/Cypress/cypress/reports',
+                    reportFiles: 'index.html',
+                    reportName: 'Cypress E2E Test Report',
+                    reportTitles: 'Cypress Tests'
+                ])
+            }
+            post {
+                always {
+                    // Stop dell'applicazione
+                    bat '''
+                        echo Stopping application...
+                        for /f "tokens=5" %%a in ('netstat -aon ^| find ":8080" ^| find "LISTENING"') do taskkill /F /PID %%a 2>nul
+                    '''
+                }
+                success {
+                    echo '✅ Test Cypress completati con successo'
+                }
+                failure {
+                    echo '❌ Test Cypress falliti'
+                    // Archivia screenshot e video per debugging
+                    archiveArtifacts artifacts: 'Testing/Cypress/cypress/screenshots/**,Testing/Cypress/cypress/videos/**', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        // ========================================
+        // STAGE 9: Deploy to Kubernetes
+        // ========================================
+        stage('Deploy to Kubernetes') {
+            when {
+                expression { return params.DEPLOY_TO_K8S }
+            }
+            steps {
+                script {
+                    echo '========================================='
+                    echo '  ☸️  DEPLOYMENT SU KUBERNETES'
+                    echo '========================================='
+                    echo "Namespace: ${K8S_NAMESPACE}"
+                    echo "Deployment: ${K8S_DEPLOYMENT}"
+                    echo "Environment: ${params.ENVIRONMENT}"
+                }
+                
+                // Deploy su Kubernetes con kubeconfig
+                withCredentials([file(credentialsId: "${K8S_CONFIG_ID}", variable: 'KUBECONFIG')]) {
+                    bat """
+                        echo Applying Kubernetes manifests...
+                        
+                        REM Create namespace if not exists
+                        kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                        
+                        REM Apply ConfigMap
+                        kubectl apply -f Infra/configmap.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Apply Secrets
+                        kubectl apply -f Infra/secret.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Apply Deployment (aggiorna immagine)
+                        kubectl set image deployment/${K8S_DEPLOYMENT} spring-boot-app=${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${K8S_NAMESPACE}
+                        
+                        REM Se deployment non esiste, applicalo
+                        kubectl apply -f Infra/deployment.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Apply Service
+                        kubectl apply -f Infra/service.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Apply Ingress
+                        kubectl apply -f Infra/ingress.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Apply HPA
+                        kubectl apply -f Infra/hpa.yaml -n ${K8S_NAMESPACE}
+                        
+                        REM Wait for rollout to complete
+                        kubectl rollout status deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE} --timeout=5m
+                        
+                        REM Verifica deployment
+                        kubectl get all -n ${K8S_NAMESPACE}
+                    """
+                }
+                
+                // Salva deployment info
+                script {
+                    def deploymentInfo = """
+                    ========================================
+                      DEPLOYMENT COMPLETATO
+                    ========================================
+                    Environment: ${params.ENVIRONMENT}
+                    Namespace: ${K8S_NAMESPACE}
+                    Image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                    Build Number: ${env.BUILD_NUMBER}
+                    Date: ${new Date()}
+                    ========================================
+                    """
+                    echo deploymentInfo
+                    writeFile file: 'deployment-info.txt', text: deploymentInfo
+                    archiveArtifacts artifacts: 'deployment-info.txt'
+                }
+            }
+            post {
+                success {
+                    echo '✅ Deployment su Kubernetes completato'
+                }
+                failure {
+                    echo '❌ Deployment su Kubernetes fallito'
+                    
+                    // Rollback automatico in caso di fallimento
+                    script {
+                        withCredentials([file(credentialsId: "${K8S_CONFIG_ID}", variable: 'KUBECONFIG')]) {
+                            bat """
+                                echo Rollback deployment...
+                                kubectl rollout undo deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE}
+                                kubectl rollout status deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+    } // Fine stages
+    
+    // ========================================
+    // POST ACTIONS
+    // ========================================
+    post {
+        always {
+            echo '========================================='
+            echo '  🧹 CLEANUP E REPORT FINALI'
+            echo '========================================='
+            
+            // Genera report aggregate
+            script {
+                def buildStatus = currentBuild.result ?: 'SUCCESS'
+                def buildDuration = currentBuild.durationString.replace(' and counting', '')
+                
+                def summary = """
+                ========================================
+                  PIPELINE EXECUTION SUMMARY
+                ========================================
+                Status: ${buildStatus}
+                Build Number: ${env.BUILD_NUMBER}
+                Duration: ${buildDuration}
+                Branch: ${params.GIT_BRANCH_PARAM ?: GIT_BRANCH}
+                Environment: ${params.ENVIRONMENT}
+                
+                Stages:
+                - Git Checkout: ✅
+                - Unit Tests: ${params.SKIP_TESTS ? '⏭️ SKIPPED' : '✅'}
+                - SonarQube: ${params.SKIP_SONAR ? '⏭️ SKIPPED' : '✅'}
+                - Build JAR: ✅
+                - Docker Build: ✅
+                - Docker Push: ${params.DEPLOY_TO_K8S ? '✅' : '⏭️ SKIPPED'}
+                - Cypress E2E: ${params.SKIP_CYPRESS ? '⏭️ SKIPPED' : '✅'}
+                - K8s Deploy: ${params.DEPLOY_TO_K8S ? '✅' : '⏭️ SKIPPED'}
+                
+                Artifacts:
+                - JAR: target/corsontt38-${env.BUILD_NUMBER}.jar
+                - Docker Image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                
+                Links:
+                - Jenkins Build: ${env.BUILD_URL}
+                - SonarQube: ${SONAR_HOST_URL}/dashboard?id=${SONAR_PROJECT_KEY}
+                
+                ========================================
+                """
+                
+                echo summary
+                writeFile file: 'pipeline-summary.txt', text: summary
+                archiveArtifacts artifacts: 'pipeline-summary.txt'
+            }
+            
+            // Cleanup Docker images locali per liberare spazio
+            script {
+                bat '''
+                    echo Cleaning up old Docker images...
+                    docker image prune -f --filter "until=72h"
+                    docker system df
+                '''
+            }
+        }
+        
+        success {
+            echo '✅✅✅ PIPELINE COMPLETATA CON SUCCESSO ✅✅✅'
+            
+            // Notifica successo (configurare con plugin email/slack/teams)
+            script {
+                // emailext (
+                //     subject: "✅ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                //     body: """
+                //         Build completata con successo!
+                //         
+                //         Job: ${env.JOB_NAME}
+                //         Build: ${env.BUILD_NUMBER}
+                //         URL: ${env.BUILD_URL}
+                //         
+                //         Immagine Docker: ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                //     """,
+                //     to: 'team@corso.local'
+                // )
+                
+                echo 'Inviare notifica di successo al team'
+            }
+        }
+        
+        failure {
+            echo '❌❌❌ PIPELINE FALLITA ❌❌❌'
+            
+            // Notifica fallimento
+            script {
+                // emailext (
+                //     subject: "❌ Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                //     body: """
+                //         Build fallita!
+                //         
+                //         Job: ${env.JOB_NAME}
+                //         Build: ${env.BUILD_NUMBER}
+                //         URL: ${env.BUILD_URL}
+                //         Console: ${env.BUILD_URL}console
+                //         
+                //         Verificare i log per dettagli.
+                //     """,
+                //     to: 'team@corso.local'
+                // )
+                
+                echo 'Inviare notifica di fallimento al team'
+            }
+            
+            // Archivia log per debugging
+            archiveArtifacts artifacts: '*.log', allowEmptyArchive: true
+        }
+        
+        unstable {
+            echo '⚠️ PIPELINE INSTABILE (test parziali falliti)'
+        }
+        
+        aborted {
+            echo '🛑 PIPELINE ABORTITA MANUALMENTE'
+        }
+    }
+}

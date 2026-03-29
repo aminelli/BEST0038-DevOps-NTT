@@ -1,0 +1,70 @@
+---
+# Service ClusterIP (interno al cluster)
+apiVersion: v1
+kind: Service
+metadata:
+  name: corso-ntt-38-service
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+    component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: corso-ntt-38
+    component: backend
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080        # Porta del service
+    targetPort: http  # Porta del container
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# Service NodePort (esposto sui nodi del cluster)
+apiVersion: v1
+kind: Service
+metadata:
+  name: corso-ntt-38-nodeport
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+    component: backend
+    service-type: nodeport
+spec:
+  type: NodePort
+  selector:
+    app: corso-ntt-38
+    component: backend
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080          # Porta del service
+    targetPort: http    # Porta del container
+    nodePort: 30080     # Porta esposta sui nodi K8s (range: 30000-32767)
+  sessionAffinity: None
+
+---
+# Service Headless (per service discovery diretto)
+apiVersion: v1
+kind: Service
+metadata:
+  name: corso-ntt-38-headless
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+    component: backend
+    service-type: headless
+spec:
+  clusterIP: None  # Headless service
+  selector:
+    app: corso-ntt-38
+    component: backend
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: http

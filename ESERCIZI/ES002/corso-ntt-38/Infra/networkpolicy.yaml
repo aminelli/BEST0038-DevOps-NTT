@@ -1,0 +1,79 @@
+---
+# Network Policy per controllare il traffico di rete
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: corso-ntt-38-netpol
+  namespace: corso-ntt-38
+  labels:
+    app: corso-ntt-38
+spec:
+  podSelector:
+    matchLabels:
+      app: corso-ntt-38
+      component: backend
+  
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  # Regole di ingresso
+  ingress:
+  # Consenti traffico dall'Ingress Controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  
+  # Consenti traffico da altri pod nello stesso namespace
+  - from:
+    - podSelector:
+        matchLabels:
+          app: corso-ntt-38
+    ports:
+    - protocol: TCP
+      port: 8080
+  
+  # Consenti health checks da Kubernetes
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: TCP
+      port: 8080
+  
+  # Regole di uscita
+  egress:
+  # Consenti DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Consenti connessioni HTTPS esterne (API, servizi esterni)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Consenti connessioni HTTP esterne
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 80
+  
+  # Consenti comunicazione interna nel namespace
+  - to:
+    - podSelector:
+        matchLabels:
+          app: corso-ntt-38

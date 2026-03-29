@@ -1,0 +1,272 @@
+package com.corso.devops.corsontt38.config;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.logout;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Test per SecurityConfig.
+ * Verifica la configurazione di Spring Security, autenticazione e autorizzazione.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+class SecurityConfigTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SecurityConfig securityConfig;
+
+    // ========================================================================
+    // TEST BEAN CONFIGURATION
+    // ========================================================================
+
+    @Test
+    void securityConfigBean_shouldNotBeNull() {
+        assertThat(securityConfig).isNotNull();
+    }
+
+    @Test
+    void userDetailsServiceBean_shouldNotBeNull() {
+        assertThat(userDetailsService).isNotNull();
+    }
+
+    @Test
+    void passwordEncoderBean_shouldNotBeNull() {
+        assertThat(passwordEncoder).isNotNull();
+    }
+
+    @Test
+    void passwordEncoder_shouldBeBCrypt() {
+        assertThat(passwordEncoder.getClass().getSimpleName()).isEqualTo("BCryptPasswordEncoder");
+    }
+
+    // ========================================================================
+    // TEST USER DETAILS SERVICE
+    // ========================================================================
+
+    @Test
+    void userDetailsService_shouldLoadUserByUsername() {
+        UserDetails user = userDetailsService.loadUserByUsername("user");
+        
+        assertThat(user).isNotNull();
+        assertThat(user.getUsername()).isEqualTo("user");
+        assertThat(user.getAuthorities()).isNotEmpty();
+    }
+
+    @Test
+    void userDetailsService_shouldLoadAdminByUsername() {
+        UserDetails admin = userDetailsService.loadUserByUsername("admin");
+        
+        assertThat(admin).isNotNull();
+        assertThat(admin.getUsername()).isEqualTo("admin");
+        assertThat(admin.getAuthorities()).hasSize(2); // USER + ADMIN roles
+    }
+
+    @Test
+    void userDetailsService_shouldLoadMarioByUsername() {
+        UserDetails mario = userDetailsService.loadUserByUsername("mario");
+        
+        assertThat(mario).isNotNull();
+        assertThat(mario.getUsername()).isEqualTo("mario");
+        assertThat(mario.getAuthorities()).isNotEmpty();
+    }
+
+    @Test
+    void userDetails_shouldHaveEncodedPasswords() {
+        UserDetails user = userDetailsService.loadUserByUsername("user");
+        
+        assertThat(user.getPassword()).isNotNull();
+        assertThat(user.getPassword()).startsWith("$2"); // BCrypt prefix
+        assertThat(passwordEncoder.matches("user123", user.getPassword())).isTrue();
+    }
+
+    @Test
+    void adminUser_shouldHaveBothRoles() {
+        UserDetails admin = userDetailsService.loadUserByUsername("admin");
+        
+        boolean hasUserRole = admin.getAuthorities().stream()
+            .anyMatch(auth -> auth.getAuthority().equals("ROLE_USER"));
+        boolean hasAdminRole = admin.getAuthorities().stream()
+            .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        
+        assertThat(hasUserRole).isTrue();
+        assertThat(hasAdminRole).isTrue();
+    }
+
+    // ========================================================================
+    // TEST PUBLIC PAGES ACCESS
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void anonymousUser_shouldAccessHomePage() throws Exception {
+        mockMvc.perform(get("/"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousUser_shouldAccessAboutPage() throws Exception {
+        mockMvc.perform(get("/about"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousUser_shouldAccessLoginPage() throws Exception {
+        mockMvc.perform(get("/login"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousUser_shouldAccessStaticResources() throws Exception {
+        mockMvc.perform(get("/css/custom.css"))
+            .andExpect(status().isOk());
+    }
+
+    // ========================================================================
+    // TEST PRIVATE AREA ACCESS
+    // ========================================================================
+
+    @Test
+    @WithAnonymousUser
+    void anonymousUser_shouldBeRedirectedToLoginForPrivateArea() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("http://localhost/login"));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    void authenticatedUser_shouldAccessPrivateArea() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(authenticated().withUsername("user"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
+    void adminUser_shouldAccessPrivateArea() throws Exception {
+        mockMvc.perform(get("/private/dashboard"))
+            .andExpect(status().isOk())
+            .andExpect(authenticated().withUsername("admin"));
+    }
+
+    // ========================================================================
+    // TEST LOGIN FUNCTIONALITY
+    // ========================================================================
+
+    @Test
+    void login_withValidCredentials_shouldSucceed() throws Exception {
+        mockMvc.perform(formLogin("/login")
+                .user("user")
+                .password("user123"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/private/dashboard"))
+            .andExpect(authenticated().withUsername("user"));
+    }
+
+    @Test
+    void login_withInvalidPassword_shouldFail() throws Exception {
+        mockMvc.perform(formLogin("/login")
+                .user("user")
+                .password("wrongpassword"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login?error=true"))
+            .andExpect(unauthenticated());
+    }
+
+    @Test
+    void login_withInvalidUsername_shouldFail() throws Exception {
+        mockMvc.perform(formLogin("/login")
+                .user("nonexistentuser")
+                .password("password"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login?error=true"))
+            .andExpect(unauthenticated());
+    }
+
+    @Test
+    void login_asAdmin_shouldSucceed() throws Exception {
+        mockMvc.perform(formLogin("/login")
+                .user("admin")
+                .password("admin123"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/private/dashboard"))
+            .andExpect(authenticated().withUsername("admin"));
+    }
+
+    @Test
+    void login_asMario_shouldSucceed() throws Exception {
+        mockMvc.perform(formLogin("/login")
+                .user("mario")
+                .password("mario123"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/private/dashboard"))
+            .andExpect(authenticated().withUsername("mario"));
+    }
+
+    // ========================================================================
+    // TEST LOGOUT FUNCTIONALITY
+    // ========================================================================
+
+    @Test
+    @WithMockUser(username = "user")
+    void logout_shouldSucceed() throws Exception {
+        mockMvc.perform(logout())
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/?logout=true"))
+            .andExpect(unauthenticated());
+    }
+
+    // ========================================================================
+    // TEST PASSWORD ENCODER
+    // ========================================================================
+
+    @Test
+    void passwordEncoder_shouldEncodeAndMatch() {
+        String rawPassword = "testPassword123";
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+        
+        assertThat(encodedPassword).isNotEqualTo(rawPassword);
+        assertThat(passwordEncoder.matches(rawPassword, encodedPassword)).isTrue();
+        assertThat(passwordEncoder.matches("wrongPassword", encodedPassword)).isFalse();
+    }
+
+    @Test
+    void passwordEncoder_shouldProduceDifferentHashesForSamePassword() {
+        String rawPassword = "samePassword";
+        String encoded1 = passwordEncoder.encode(rawPassword);
+        String encoded2 = passwordEncoder.encode(rawPassword);
+        
+        // BCrypt includes salt, so same password produces different hashes
+        assertThat(encoded1).isNotEqualTo(encoded2);
+        assertThat(passwordEncoder.matches(rawPassword, encoded1)).isTrue();
+        assertThat(passwordEncoder.matches(rawPassword, encoded2)).isTrue();
+    }
+}
